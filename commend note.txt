@@ -1,0 +1,13 @@
+
+web build ->>
+npm run web:build
+npx eas-cli@latest deploy --prod
+
+app build
+
+npx eas-cli@latest build --platform android --profile production
+
+cd android
+.\gradlew.bat assembleRelease
+
+npx eas-cli update --channel production --environment production --message "ပြင်ဆင်ချက်အကျဉ်း"

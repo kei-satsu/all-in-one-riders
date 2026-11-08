@@ -1,12 +1,21 @@
 {
   "expo": {
-    "name": "all-in-one-riders",
+    "name": "AIO Riders",
     "slug": "all-in-one-riders",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "allinoneriders",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/126e4726-1cdd-4bf4-8a6c-5379c1ad3b6a",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -17,19 +26,51 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "package": "com.aio.riders"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "All In One Riders",
+      "shortName": "Riders",
+      "themeColor": "#208AEF",
+      "backgroundColor": "#f8fafc"
     },
     "plugins": [
       "expo-router",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "ပို့ဆောင်မှုနှင့် rider လုပ်ငန်းများအတွက် တည်နေရာကို အသုံးပြုခွင့်ပေးပါ။",
+          "locationAlwaysAndWhenInUsePermission": "App နောက်ခံတွင်ရှိနေချိန်နှင့် မျက်နှာပြင်ပိတ်ထားချိန်တွင်လည်း rider live location ပို့နိုင်ရန် တည်နေရာကို အမြဲအသုံးပြုခွင့်ပေးပါ။",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "QR code နှင့် barcode ဖတ်ရန် ကင်မရာအသုံးပြုခွင့်ပေးပါ။",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ပို့ဆောင်မှု သက်သေပုံကို ရွေးရန် ဓာတ်ပုံများကို အသုံးပြုခွင့်ပေးပါ။",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 76
         }
       ]
@@ -37,6 +78,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "126e4726-1cdd-4bf4-8a6c-5379c1ad3b6a"
+      }
     }
   }
 }

@@ -1,0 +1,113 @@
+AIO Riders - build and update commands (Windows PowerShell)
+==========================================================
+
+Run commands from the project root:
+  cd C:\Users\yepho\all-in-one-riders
+
+Before building
+---------------
+1. Install the project dependencies:
+   npm ci
+
+2. The app needs these public variables for its mobile/web bundle:
+   EXPO_PUBLIC_SUPABASE_URL
+   EXPO_PUBLIC_SUPABASE_ANON_KEY
+   EXPO_PUBLIC_INTAKE_API_URL
+
+   For local builds, set them in the root .env file. For EAS builds and OTA
+   publishes, add the same values to the Expo project's "production"
+   environment in the Expo/EAS dashboard. EXPO_PUBLIC_ values are visible in
+   the app; never put passwords, service-role keys, Telegram bot tokens, or
+   storage secrets in them.
+
+Android local build (Windows)
+-----------------------------
+Prerequisites: Android Studio, Android SDK, a connected Android phone with
+USB debugging enabled (or a running emulator), and Android SDK environment
+variables/tools available to Gradle.
+
+To sync app.json config/plugins and build/install a local development app:
+  npx expo prebuild --platform android
+  npx expo run:android
+
+This is a development build, not a Play Store production release. The
+prebuild command generates/synchronizes the native Android project from app
+config and plugins; make a backup/review native changes first if android/
+contains hand-written changes.
+
+To make a locally-built release APK for private sideload testing:
+  npx expo prebuild --platform android
+  cd android
+  .\gradlew.bat assembleRelease
+  cd ..
+
+APK output:
+  android\app\build\outputs\apk\release\app-release.apk
+
+IMPORTANT: the current android/app/build.gradle release signing config uses
+the default debug keystore. Do not distribute that APK as a production app or
+use it for Play Store updates. Production releases need a private release
+keystore and secure signing configuration. Do not commit the keystore or its
+passwords. This Windows project cannot run EAS Build's --local mode; use EAS
+cloud Build for a production-signed release, or set up proper local signing.
+
+First OTA-capable production build (one-time)
+---------------------------------------------
+An installed binary must include expo-updates and the EAS Update URL/runtime
+configuration before it can receive OTA. Older installed APKs cannot acquire
+expo-updates through an OTA update.
+
+1. Sign in (if already logged in as the correct account, do not log in again):
+   npx eas-cli login
+
+2. Make sure the required variables above exist in the EAS "production"
+   environment.
+
+3. Build the production Android APK/AAB in EAS:
+   npx eas-cli build --platform android --profile production
+
+   To build both supported native platforms:
+   npx eas-cli build --platform all --profile production
+
+4. Install/distribute this new build once to every user who needs OTA updates.
+   The production profile is connected to the "production" update channel.
+
+Send a mobile OTA update (no new native build for compatible JS/assets)
+-----------------------------------------------------------------------
+Publish an Android update:
+  npx eas-cli update --channel production --environment production --platform android --message "Describe the change"
+
+Publish Android and iOS updates together:
+  npx eas-cli update --channel production --environment production --message "Describe the change"
+
+The app checks for updates on launch. Users may need to fully close and reopen
+the app to load the downloaded update. OTA cannot add/change native packages,
+permissions, app identifiers, or native configuration; those changes require
+a new native build and user installation. runtimeVersion uses appVersion:
+keep that version unchanged for OTA-compatible JS changes, and make a new
+build when native changes require an incompatible runtime.
+
+Build/export the PWA
+--------------------
+Create the static web/PWA files in dist:
+  npm run web:build
+
+Deploy to the already-linked Vercel project (requires Vercel CLI login and
+project linking/configuration):
+  npx vercel --prod
+
+Alternatively, if using EAS Hosting and it is configured for this project:
+  npx eas-cli deploy --prod
+
+PWA deployment is separate from EAS mobile OTA. Browser location/camera
+permissions require HTTPS. PWA location updates work only while the page is
+open; the browser does not provide the native app's continuous background
+location service.
+
+Where to check
+--------------
+- EAS Update channel/runtime config: app.json and eas.json
+- Native config/plugins: app.json
+- Current EAS usage/quotas and project environment variables: Expo dashboard
+  -> project -> Environment variables / Usage
+- PWA deployment and domain: Vercel project dashboard

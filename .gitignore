@@ -31,6 +31,8 @@ yarn-error.*
 *.pem
 
 # local env files
+/.env
+supabase/functions/.env
 .env*.local
 
 # typescript

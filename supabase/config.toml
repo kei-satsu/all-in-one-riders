@@ -1,0 +1,7 @@
+project_id = "all-in-one-riders"
+
+[functions.deliver-with-proof]
+verify_jwt = true
+
+[functions.complete-pickup-with-proof]
+verify_jwt = true

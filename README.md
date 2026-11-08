@@ -53,7 +53,7 @@ The Android and iOS apps use EAS Update channels (`preview` and `production`) wi
 npx eas-cli update --channel production --environment production --message "Describe the update"
 ```
 
-The app checks for updates when it opens. With the current `fallbackToCacheTimeout: 0` setting, a downloaded update is used the next time the app reloads; users may need to close and reopen the app.
+The app checks for updates when it opens. Users can also check and download an update from **More → App Update**, then choose to restart the app to apply it. With the current `fallbackToCacheTimeout: 0` setting, a downloaded update from the launch check is used the next time the app reloads; users may need to close and reopen the app. Manual OTA updates are available only in native release builds on the `preview` or `production` channel with `expo-updates` enabled.
 
 **One-time upgrade required:** an app build must already include `expo-updates` to receive OTA updates. Builds installed before EAS Update was configured cannot be made OTA-capable remotely. Build and distribute a new production binary once, then users on that build can receive compatible OTA updates:
 

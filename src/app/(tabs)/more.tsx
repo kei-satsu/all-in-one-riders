@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, type Href } from 'expo-router';
+import * as Updates from 'expo-updates';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -40,6 +41,11 @@ export default function MoreScreen() {
     error: null,
   });
   const [logoutMenuVisible, setLogoutMenuVisible] = useState(false);
+  const [checkingForUpdate, setCheckingForUpdate] = useState(false);
+  const [updateDownloaded, setUpdateDownloaded] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState('');
+  const [updateError, setUpdateError] = useState(false);
+  const otaUpdateSupported = Platform.OS !== 'web' && !__DEV__ && Updates.isEnabled;
 
   useEffect(
     () => subscribeToLocationBroadcastStatus(setLocationStatus),
@@ -150,6 +156,64 @@ export default function MoreScreen() {
         onPress: () => void performLogout(),
       },
     ]);
+  };
+
+  const handleUpdate = async () => {
+    if (!otaUpdateSupported || checkingForUpdate) return;
+
+    if (updateDownloaded) {
+      Alert.alert(
+        'Update အသင့်ဖြစ်ပါပြီ',
+        'Update အသစ်ကို အသုံးပြုရန် App ကို ယခုပြန်ဖွင့်ပါမည်။',
+        [
+          { text: 'နောက်မှ', style: 'cancel' },
+          {
+            text: 'ယခုပြန်ဖွင့်မည်',
+            onPress: () => {
+              void Updates.reloadAsync().catch((error: unknown) => {
+                console.error('Could not reload the app to apply its update:', error);
+                setUpdateError(true);
+                setUpdateMessage(
+                  `App ကို ပြန်ဖွင့်၍ Update တင်မရပါ။ ${error instanceof Error ? error.message : String(error)}`,
+                );
+              });
+            },
+          },
+        ],
+      );
+      return;
+    }
+
+    setCheckingForUpdate(true);
+    setUpdateError(false);
+    setUpdateMessage('Update အသစ် ရှိမရှိ စစ်ဆေးနေပါသည်။');
+
+    try {
+      const checkResult = await Updates.checkForUpdateAsync();
+      if (!checkResult.isAvailable) {
+        setUpdateDownloaded(false);
+        setUpdateMessage('အသုံးပြုနိုင်သော Update အသစ် မရှိပါ။');
+        return;
+      }
+
+      setUpdateMessage('Update အသစ်ကို download လုပ်နေပါသည်။');
+      const fetchResult = await Updates.fetchUpdateAsync();
+      if (!fetchResult.isNew) {
+        setUpdateMessage('အသုံးပြုနိုင်သော Update အသစ် မရှိပါ။');
+        return;
+      }
+
+      setUpdateDownloaded(true);
+      setUpdateMessage('Update download ပြီးပါပြီ။ ခလုတ်ကိုနှိပ်ပြီး ယခုပြန်ဖွင့်နိုင်ပါသည်။');
+    } catch (error) {
+      console.error('Could not check or download an app update:', error);
+      setUpdateError(true);
+      setUpdateMessage(
+        `Update ရယူ၍မရပါ။ အင်တာနက်ကိုစစ်ပြီး ထပ်မံကြိုးစားပါ။ ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      setCheckingForUpdate(false);
+    }
   };
 
   return React.createElement(
@@ -417,6 +481,58 @@ export default function MoreScreen() {
         { style: styles.menuGroup },
         React.createElement(
           View,
+          { style: styles.updateMenuItem },
+          React.createElement(
+            View,
+            { style: [styles.menuIcon, styles.infoIconBg] },
+            React.createElement(Ionicons, { name: 'cloud-download-outline', size: 20, color: '#208AEF' })
+          ),
+          React.createElement(
+            View,
+            { style: styles.menuTextContainer },
+            React.createElement(Text, { style: styles.menuTitle }, 'App Update'),
+            React.createElement(
+              Text,
+              { style: styles.menuSubTitle },
+              'OTA Update ကို စစ်ဆေးပြီး App ထဲမှ တင်နိုင်ပါသည်။'
+            )
+          )
+        ),
+        React.createElement(
+          TouchableOpacity,
+          {
+            style: [
+              styles.updateButton,
+              (!otaUpdateSupported || checkingForUpdate) && styles.updateButtonDisabled,
+            ],
+            onPress: () => void handleUpdate(),
+            disabled: !otaUpdateSupported || checkingForUpdate,
+            activeOpacity: 0.7,
+            accessibilityRole: 'button',
+            accessibilityLabel: updateDownloaded ? 'App ကို ပြန်ဖွင့်ပြီး Update တင်ရန်' : 'Update စစ်ဆေးရန်',
+          },
+          checkingForUpdate
+            ? React.createElement(ActivityIndicator, { size: 'small', color: '#ffffff' })
+            : React.createElement(
+                Text,
+                { style: styles.updateButtonText },
+                updateDownloaded ? 'Update တင်ရန်' : 'စစ်ဆေးရန်'
+              )
+        ),
+        React.createElement(
+          Text,
+          { style: [styles.updateStatus, updateError && styles.updateError] },
+          !otaUpdateSupported
+            ? 'OTA Update ကို native release build များ (preview/production) တွင်သာ အသုံးပြုနိုင်ပါသည်။'
+            : updateMessage || 'အင်တာနက်ချိတ်ဆက်ထားချိန်တွင် Update အသစ်ကို စစ်ဆေးပါ။'
+        )
+      ),
+
+      React.createElement(
+        View,
+        { style: styles.menuGroup },
+        React.createElement(
+          View,
           { style: styles.menuItem },
           React.createElement(
             View,
@@ -567,6 +683,25 @@ const baseStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
   },
+  updateMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    paddingBottom: 8,
+  },
+  updateButton: {
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#208AEF',
+  },
+  updateButtonDisabled: { opacity: 0.55 },
+  updateButtonText: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
+  updateStatus: { color: '#64748b', fontSize: 11, lineHeight: 16, margin: 14, marginTop: 8 },
+  updateError: { color: '#dc2626' },
   menuIcon: {
     width: 38,
     height: 38,
